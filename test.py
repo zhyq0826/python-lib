@@ -1,64 +1,35 @@
 #-*- coding:utf-8 -*-
 
-
 import os
 import shutil 
 
-#root dir
-root_dir_content = os.listdir(ur'I:/TDDOWNLOAD/紗奈')
 
-#path 
-path = 'I://TDDOWNLOAD//紗奈//'
+#批量移动文件夹下面的文件夹到某个指定的目录
+def move_batch_folder_to_some_dirctory(source_path,target_path):
+    if not os.path.isdir(source_path) or not os.path.isdir(target_path):
+        return
 
-for i in root_dir_content:
-    child_path = ('%s%s')%(path,i)
-    if os.path.isdir(child_path):
-        #get children dir content
-        child_dir_content = os.listdir(child_path)
-        print child_dir_content
-        if len(child_dir_content)<=1:
-            pass
-        else:
-            print child_path
+    path_content = os.listdir(source_path)
+    for i in path_content:
+        child_path = os.path.join(source_path,i)
+        if os.path.isdir(child_path):
             try:
-                shutil.move(child_path, ur'I:/3k')
-                os.rmdir(child_path)
+                shutil.move(child_path,target_path)
             except:
-                continue  
-                
-'''
-Created on 2012-10-12
-
-@author: zhyq
-'''
+                raise
 
 
-import os
-import shutil 
+#批量移动文件夹下面的文件到某个指定的目录
+def move_batch_file_to_some_dirctory(source_path,target_path):
+    if not os.path.isdir(source_path) or not os.path.isdir(target_path):
+        return
 
-#root dir
-root_dir_content = os.listdir('I://TDDOWNLOAD//Graphis Gals')
-
-#path 
-path = 'I://TDDOWNLOAD//Graphis Gals//'
-
-for i in root_dir_content:
-    child_path = ('%s%s')%(path,i)
-    if os.path.isdir(child_path):
-        #get children dir content
-        child_dir_content = os.listdir(child_path)
-        print child_dir_content
-        if not child_dir_content:
-            os.rmdir(child_path)
-        else:  
-            for j in child_dir_content:
-                child_son_path = ('%s%s//%s')%(path,i,j)
-                if os.path.isdir(child_son_path):
-                    try:
-                        shutil.move(child_son_path, 'I://TDDOWNLOAD//Graphis Gals//new')
-                    except:
-                        continue
-                
-        
-    
+    path_content = os.listdir(source_path)
+    for i in path_content:
+        child_path = os.path.join(source_path,i)
+        if os.path.isfile(child_path):
+            try:
+                shutil.move(child_path,target_path)
+            except:
+                raise
 

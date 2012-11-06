@@ -172,6 +172,8 @@ class Page(object):
 ####################################
 #递归删除某个目录下面所有的同名文件夹
 #如果删除的文件夹不为空则清空
+#这个工具用来清理之前使用svn迁出来的
+#项目中的svn文件和svn目录
 ####################################
 def recursive_rm_folder(path,foldername):
     if not foldername:
@@ -202,7 +204,7 @@ def recursive_rm_folder(path,foldername):
                     except:
                         raise 
                 else:
-                    recursive_clean_svn(child_path)
+                    recursive_rm_folder(child_path)
             else:
                 continue
     else:

@@ -283,7 +283,7 @@ def move_douban_mp3_to_folder(path):
             if system == 'Linux':
                 true_file_name = ("%s%s")%(os.path.basename(filename)[0:-10],extendtion)
             elif system == 'Windows':
-                true_file_name = ("%s.%s")%(os.path.basename(filename)[0:-7],extendtion)
+                true_file_name = ("%s.%s")%(os.path.basename(filename)[0:-10],extendtion)
             
             create_time = ('%s-%s-%s')%(time_infor_dic['year'],time_infor_dic['mon'],time_infor_dic['day'])
            

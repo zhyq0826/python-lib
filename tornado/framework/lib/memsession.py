@@ -2,8 +2,8 @@ import memcache
 from config import config
 
 class MemcacheStore():
-    def __init__(self, server=config.memcache.server, timeout=config.memcache.timeout):
-        self.mc = memcache.Client(server, debug=False)
+    def __init__(self, server=config.Memcache.server, timeout=config.Memcache.timeout):
+        self.mc = memcache.Client(server, debug=config.DEBUG)
         self.timeout = timeout
 
     def __contains__(self, key):

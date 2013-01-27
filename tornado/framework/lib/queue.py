@@ -5,10 +5,6 @@ import time
 import json
 import redis
 import os,sys
-root_path = [os.path.dirname( #live-server
-    os.path.abspath(__file__)
-    )]
-sys.path += root_path
 
 from config import config
 from db import mongo
@@ -22,7 +18,6 @@ class Queue:
     def add(self, name, data):
         score = time.time()
         self.r.zadd(name, data, score)
-        debug('Add %.1f, %s' % (score, data))
 
     def pop(self, name):
         min_score = 0
@@ -34,7 +29,6 @@ class Queue:
             return False
 
         if len(result) == 1:
-            debug('Poped %s' % result[0])
             data = result[0]
             self.r.zrem(name, result[0])
             return data

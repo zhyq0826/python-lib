@@ -14,12 +14,6 @@ from config import config
 from db import mongo
 from encoder import MongoEncoder
 
-DEBUG = False
-
-def debug(msg):
-    if DEBUG:
-        print msg
-
 class Queue:
 
     def __init__(self):

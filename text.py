@@ -198,7 +198,7 @@ def force_unicode(s, encoding='utf-8', strings_only=False, errors='strict'):
             s = s.decode(encoding, errors)
     except UnicodeDecodeError, e:
         if not isinstance(s, Exception):
-            raise DjangoUnicodeDecodeError(s, *e.args)
+            raise TypeError(s, *e.args)
         else:
             # If we get to here, the caller has passed in an Exception
             # subclass populated with non-ASCII bytestring data without a

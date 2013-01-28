@@ -11,6 +11,7 @@ from hashlib import sha256
 import tornado
 from pymongo import DESCENDING, ASCENDING
 from bson import objectid
+from jinja2 import Environment,FileSystemLoader 
 
 from lib.memsession import MemcacheStore
 from lib.session import Session
@@ -33,6 +34,8 @@ url_param ={
 }
 
 
+ENV = Environment(loader=FileSystemLoader(config.Path.template),auto_reload=config.DEBUG)
+
 class BaseHandler(tornado.web.RequestHandler):
 
     def initialize(self):
@@ -51,6 +54,7 @@ class BaseHandler(tornado.web.RequestHandler):
                         }
                     )
         self.session.processor(self)
+        self.env = ENV
 
     def prepare(self):
         path = self.request.path
@@ -130,6 +134,12 @@ class BaseHandler(tornado.web.RequestHandler):
                 error_code=status_code,
                 msg = ''
                 )
+
+    #tornado template replaced by jinja2 
+    def render(self,template_name,**kwargs):
+        template = self.env.get_template(template_name)
+        html = template.render(**kwargs)
+        self.finish(html)
 
 
 ##################################################

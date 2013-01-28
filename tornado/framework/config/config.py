@@ -32,11 +32,11 @@ class Path:
                 os.path.abspath(__file__)
                 )
             )
-
+    template = os.path.join(root_path,'template')
     tool_path = os.path.join(root_path,"tools")
     axmlprinter2 = os.path.join(tool_path, "AXMLPrinter2.jar")
 
-class memcache:
+class Memcache:
     server = ['127.0.0.1:11211']
     timeout = 3600*24*3
 

@@ -3,7 +3,7 @@ import os
 render = web.template.render('templates/')
 
 root_path = os.path.dirname(os.path.abspath(__file__)) 
-image_path = os.path.join(root_path,'/static/image/')
+image_path = os.path.join(root_path,'static/image/')
 
 class index:
 
@@ -40,7 +40,7 @@ class download:
     def GET(self):
         web.header('Content-Type','image/jpeg') 
         web.header('Transfer-Encoding','chunked')
-        f = open('static/image/mz.jpg')
+        f = open(os.path.join(image_path,'mz.jpg'))
         while True:
             data = f.read(1024)
             time.sleep(2)

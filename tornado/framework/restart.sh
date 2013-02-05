@@ -1,2 +1,3 @@
-sudo ./daemon.sh stop && sleep 1 && sudo ./daemon start 
+#!/usr/bin/bash
+./daemon.sh stop && sleep 1 && ./daemon start 
 

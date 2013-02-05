@@ -12,11 +12,12 @@ import tornado.options
 from tornado.options import define, options
 
 from config import config
+from app.base import BaseHandler
 from app import home
 
 define("port", default=8888, type=int)
 
-class ErrorHandler(tornado.web.RequestHandler):
+class ErrorHandler(BaseHandler):
 
     def initialize(self,status_code):
         self.set_status(status_code)

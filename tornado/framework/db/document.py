@@ -3,6 +3,7 @@ from hashlib import sha256
 from datetime import datetime,timedelta
 from types import DictType,ListType,BooleanType,IntType,StringType
 from types import UnicodeType as DefaultStrType
+import time
 
 from bson.objectid import ObjectId
 from pymongo import ASCENDING,DESCENDING
@@ -87,7 +88,11 @@ class Document(object):
 
 
     def get_as_id(self,objid,collum=None):
-        document_id = self.to_objectid(objid)
+        try:
+            document_id = self.to_objectid(objid)
+        else:
+            return None
+
         doc =  self.collect.find_one({'_id':document_id},collum)
         return doc
 
@@ -191,7 +196,10 @@ class Document(object):
                         v[num] = unicode(j)
 
             if isinstance(v,datetime):
-                value[k] = datetime.strftime(v,format='%Y-%m-%d %H:%M')
+                value[k] = time.mktime(v.timetuple()) 
+            
+            if isinstance(v,basestring):
+                value[k] = v.strip()
 
         return value
 

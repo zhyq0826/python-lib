@@ -33,7 +33,7 @@ class Path:
                 )
             )
     template = os.path.join(root_path,'template')
-    tool_path = os.path.join(root_path,"tools")
+    tool_path = os.path.join(root_path,"tool")
     axmlprinter2 = os.path.join(tool_path, "AXMLPrinter2.jar")
 
 class Memcache:

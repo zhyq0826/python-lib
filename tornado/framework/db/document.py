@@ -1,8 +1,7 @@
 # -*- coding:utf-8 -*-
 from hashlib import sha256
 from datetime import datetime,timedelta
-from types import DictType,ListType,BooleanType,IntType,StringType
-from types import UnicodeType as DefaultStrType
+from types import DictType,ListType,BooleanType,IntType
 import time
 import logging
 
@@ -23,7 +22,7 @@ class Document(object):
     
     property_model={'UserDoc':dockey.user}
 
-    db ={'m':mongo} 
+    db = {'m':mongo} 
     db_file = {'m':mongo.db_file}
 
     collect = None
@@ -84,7 +83,7 @@ class Document(object):
     def get_as_id(self,objid,collum=None):
         try:
             document_id = self.to_objectid(objid)
-        else:
+        except:
             return None
 
         doc =  self.collect.find_one({'_id':document_id},collum)
@@ -161,8 +160,8 @@ class Document(object):
 
         diff_keys = p_keys.difference(d_keys)
         for i in diff_keys:
-            doc[i] = self.init_value.get(self.properties[i],None) 
-
+            doc[i] = self.init_value.get(self.properties[i],datetime.now() if i == 'atime' else None) 
+        
         if self.is_valid_doc(doc):
             objid = self.collect.insert(doc,safe=safe)
         else:

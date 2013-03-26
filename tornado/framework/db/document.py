@@ -4,31 +4,24 @@ from datetime import datetime,timedelta
 from types import DictType,ListType,BooleanType,IntType,StringType
 from types import UnicodeType as DefaultStrType
 import time
+import logging
 
 from bson.objectid import ObjectId
 from pymongo import ASCENDING,DESCENDING
 from exception import * 
 import mongo
+import dockey
 
-
-def hash_password(mid,password):
-    return sha256('%s%s'%(unicode(mid),password)).hexdigest()
-
-user_key={
-    'nickname':DefaultStrType,
-    'email':DefaultStrType,
-    'passwd':DefaultStrType,
-    'atime':datetime
-   }
-
+def hash_password(password):
+    return sha256(password).hexdigest()
 
 class Document(object):
     
-    collect_map_model = {
+    collect_model = {
             'UserDoc':mongo.user,
             }
     
-    property_map_model={}
+    property_model={'UserDoc':dockey.user}
 
     db ={'m':mongo} 
     db_file = {'m':mongo.db_file}
@@ -36,10 +29,11 @@ class Document(object):
     collect = None
     properties = None 
     collum = None
+    init_value = {ListType:[],DictType:{},IntType:0}
 
     def __init__(self):
-        self.collect = self.collect_map_model.get(self.__class__.__name__,None)
-        self.properties = self.property_map_model.get(self.__class__.__name__,None)
+        self.collect = self.collect_model.get(self.__class__.__name__,None)
+        self.properties = self.property_model.get(self.__class__.__name__,None)
 
     def __setitem__(self,k,v):
         setattr(self,k,v)
@@ -111,9 +105,7 @@ class Document(object):
         as_list = list(self.collect.find(condition,collum,skip=skip,limit=limit,sort=sort))
         as_dict={}
         for i in as_list:
-            if unicode(i['_id']) in as_dict:
-                pass
-            else:
+            if unicode(i['_id']) not in as_dict:
                 as_dict[unicode(i['_id'])]=i
 
         return as_dict,as_list
@@ -138,11 +130,13 @@ class Document(object):
         if isinstance(objid,ObjectId):
             return objid
         elif objid is None:
+            logging.error(unicode(objid)+' invalid objectid')
             raise ObjectidException('非法id')
         else:
             try:
                 objid = ObjectId(objid)
             except:
+                logging.error(unicode(objid)+' invalid objectid')
                 raise ObjectidException('非法id')
 
         return objid 
@@ -157,26 +151,24 @@ class Document(object):
             return None
         
         if self.properties is None:
+            logging.error('collection properties is None')
             raise InvalidDocException('collection properties is None')
         
         p_keys,d_keys = set(self.properties.keys()),set(doc.keys())
         if not p_keys>=d_keys:
+            logging.error('error collection key')
             raise InvalidDocException('error collection key')
 
-        #init empty key 
-        type_map = {ListType:[],DictType:{},IntType:0}
         diff_keys = p_keys.difference(d_keys)
         for i in diff_keys:
-            doc[i] = type_map.get(self.properties[i],None) 
+            doc[i] = self.init_value.get(self.properties[i],None) 
 
-        if safe:
-            if self.is_valid_doc(doc):
-                objid = self.collect.insert(doc,safe=True)
-            else:
-                s = ('%s %s ')%(self.collect,'invalid document')
-                raise InvalidDocException(s)
+        if self.is_valid_doc(doc):
+            objid = self.collect.insert(doc,safe=safe)
         else:
-            objid = self.collect.insert(doc,safe=False)
+            s = ('%s %s ')%(self.collect,'invalid document')
+            logging.error(s)
+            raise InvalidDocException(s)
 
         return objid
 

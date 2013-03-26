@@ -1,3 +1,2 @@
-#!/usr/bin/bash
-./daemon.sh stop && sleep 1 && ./daemon start 
-
+#!/bin/bash
+./daemon.sh stop && sleep 1 && ./daemon.sh start 

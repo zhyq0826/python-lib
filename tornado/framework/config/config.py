@@ -24,6 +24,9 @@ else:
     LOG_FILENAME = 'server.log'
     LOG_LEVEL = logging.ERROR
     LOG_PATH = '/var/log/'
+    print 'the server is starting'
+    print 'log mode is warning ...'
+    print 'log file is in '+LOG_PATH+' directory called '+LOG_FILENAME+'. Good work!\n'
 
 
 class Path:

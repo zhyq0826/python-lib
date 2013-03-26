@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#-*- encode: UTF-8 -*-
+#-*- coding: UTF-8 -*-
 
 import os
 import re
@@ -20,10 +20,11 @@ define("port", default=8888, type=int)
 class ErrorHandler(BaseHandler):
 
     def initialize(self,status_code):
+        super(ErrorHandler,self).initialize()
         self.set_status(status_code)
 
     def prepare(self):
-        self.render('error.html',error_code = self._status_code)
+        self.render('error.html',error_code = self._status_code,msg='')
 
 
 class Application(tornado.web.Application):

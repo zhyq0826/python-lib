@@ -1,5 +1,6 @@
 import web
 import os
+
 render = web.template.render('templates/')
 
 root_path = os.path.dirname(os.path.abspath(__file__)) 
@@ -9,17 +10,22 @@ class index:
 
     def GET(self):
         i = web.input(name=None)
-        print i
+        #print i
+        print session.__dict__.items() 
+        print type(session)
+        print 's',session.count
         referer = web.ctx.env.get('HTTP_REFERER','http://google.com')
-        print referer
+        #print referer
         for j in web.ctx:
             if isinstance(web.ctx[j],dict):
                 for k,v in web.ctx[j].items():
-                    print k,v
+                    pass
+                    #print k,v
             else:
-                print j,web.ctx[j]
+                pass
+                #print j,web.ctx[j]
 
-        return render.hello(name=i.name)
+        return render.hello(name=i.name,sid='')
 
 class rxml:
 
@@ -70,14 +76,12 @@ urls = (
 
 #application processors to do something before request after request
 app = web.application(urls,globals())
-
-app.add_processor(web.loadhook(my_loadhook))
-app.add_processor(web.unloadhook(my_unloadhook))
+session = web.session.Session(app,web.session.DiskStore('sessions'),initializer={'count':0})
+#app.add_processor(web.loadhook(my_loadhook))
+#app.add_processor(web.unloadhook(my_unloadhook))
 
 app.internalerror = internalerror
 #app.notfound = notfound
 
 if __name__ == '__main__':
     app.run()
-
-

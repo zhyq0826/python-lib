@@ -20,13 +20,19 @@ class index:
         print 'handler session name',web.ctx.session.name
         referer = web.ctx.env.get('HTTP_REFERER','http://google.com')
         #print referer
-        for j in web.ctx:
-            if isinstance(web.ctx[j],dict):
-                for k,v in web.ctx[j].items():
-                    pass
-                    #print k,v
-            else:
-                pass
+        #print web.ctx
+        #print type(web.ctx)
+        #print web.ctx.keys()
+        #for k,v in web.ctx.items():
+            #print k,' ',v
+        #for j in web.ctx:
+            #print j
+            # if isinstance(web.ctx[j],dict):
+            #     for k,v in web.ctx[j].items():
+            #         pass
+            #         #print k,v
+            # else:
+            #     pass
                 #print j,web.ctx[j]
 
         return render.hello(name=i.name,sid=web.ctx.session.session_id)
@@ -86,7 +92,6 @@ def session_hook():
 
 #application processors to do something before request after request
 print 'app session ',id(session)
-print 'app session id ',session
 
 app.add_processor(web.loadhook(session_hook))
 #app.add_processor(web.loadhook(my_loadhook))

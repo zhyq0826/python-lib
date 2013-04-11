@@ -2,7 +2,7 @@
 #!/usr/bin/env python
 
 
-import os
+import os,sys
 from math import ceil,floor
 import datetime
 from struct import pack,unpack
@@ -34,6 +34,14 @@ url_param ={
 }
 
 
+DEBUG_LIST = []
+
+def debug_process():
+    print 'current unreleased object is about ',len(as_list)
+    print 'these object are below: address --> refference count'
+    for i in as_list:
+        print id(i),'-->',sys.getrefcount(i)
+
 ENV = Environment(loader=FileSystemLoader(config.Path.template),auto_reload=config.DEBUG)
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -55,6 +63,11 @@ class BaseHandler(tornado.web.RequestHandler):
                     )
         self.session.processor(self)
         self.env = ENV
+        
+        if config.DEBUG:
+            if self.session._data not in DEBUG_LIST:
+                DEBUG_LIST.append(self.session._data)
+                debug_process()
 
     def prepare(self):
         path = self.request.path

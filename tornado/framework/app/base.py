@@ -261,12 +261,12 @@ class FormHanlder(BaseHandler):
                     self.record[k] = 0
 
         try:
-            _required = self.valided_key.get('required',[])
+            _required = self.validation.get('required',[])
             for k in _required:
                 v = self.get_argument(k,default=None)
                 self._valide_required(k,v)
 
-            for k in self.valided_key.get('valide',{}):
+            for k in self.validation.get('valide',{}):
                 pass
                 #todo 
         except Exception, e:
@@ -283,6 +283,8 @@ class FormHanlder(BaseHandler):
             self.msg = self.error_msg.get(k,('%s-%s')%(k,msg))
         except Exception, e:
             raise
+        else:
+            return value
 
 
 ##################################################

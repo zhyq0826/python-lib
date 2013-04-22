@@ -9,17 +9,20 @@ from struct import pack,unpack
 from hashlib import sha256
 
 import tornado
-from pymongo import DESCENDING, ASCENDING
+
+from pymongo.collection import Collection
 from bson import objectid
+
 from jinja2 import Environment,FileSystemLoader 
 
 from lib.memsession import MemcacheStore
 from lib.session import Session
 from lib.queue import Queue
+
 from db import mongo
 from config import config
 
-url_param ={
+URL_PARAM ={
     '/comment/add':{
         'need':['comment','imgid'],
         'login':True
@@ -36,6 +39,7 @@ url_param ={
 
 DEBUG_LIST = []
 
+#todo check webpy session
 def debug_process():
     print 'current unreleased object is about ',len(as_list)
     print 'these object are below: address --> refference count'
@@ -70,18 +74,22 @@ class BaseHandler(tornado.web.RequestHandler):
                 debug_process()
 
     def prepare(self):
+        '''
+            check current request need or not to be logined
+            process query arguments skip and limit
+        '''
         path = self.request.path
         argu_keys = self.request.arguments.keys()
+
         skip = self.get_argument('skip',default=None)
         limit = self.get_argument('limit',default=None)
 
         self.msg = None
         self._buffer = None
-        need = url_param.get(path,{}).get('need',[])
-        need_login = url_param.get(path,{}).get('login',False)        
-        if sorted(list(set(need) & set(argu_keys)))==sorted(need):
-            pass
-        else:
+        
+        need_argu = URL_PARAM.get(path,{}).get('need',[])
+        need_login = URL_PARAM.get(path,{}).get('login',False)        
+        if not sorted(list(set(need_argu) & set(argu_keys)))==sorted(need):
             raise tornado.web.HTTPError(404)
         
         if need_login and not self.session.uid:
@@ -93,19 +101,39 @@ class BaseHandler(tornado.web.RequestHandler):
                 limit = int(limit)
                 if skip <0 or limit <=0:
                     raise
-            except Exception as e:
+            except Exception ,e:
                 raise tornado.web.HTTPError(500)
             else:
                 self.skip = skip
                 self.limit = limit
         else:
             pass
-        
+    
+    def write_error(self,status_code, **kwargs):
+        self.render(
+                "error.html",
+                error_code=status_code,
+                msg = ''
+                )
+
+    #tornado template replaced by jinja2 
+    def render(self,template_name,**kwargs):
+        template = self.env.get_template(template_name)
+        html = template.render(**kwargs)
+        self.finish(html)
+
+
+class ServiceHandler(BaseHandler):
+
+
+    def prepare(self):
+        super(BaseHandler,self).prepare()
+        pass
 
     def get(self):    
         try:
             self.GET()
-        except Exception as e :
+        except Exception,e :
             logging.warning(e)
             self._buffer = json.dumps({'code':1,'msg':'error'})
         else:
@@ -121,7 +149,7 @@ class BaseHandler(tornado.web.RequestHandler):
     def post(self):
         try:
             self.POST()
-        except Exception as e:
+        except Exception ,e:
             logging.warning(e)
             self._buffer = json.dumps({'code':1,'msg':'error'})
         else:
@@ -140,19 +168,121 @@ class BaseHandler(tornado.web.RequestHandler):
     
     def POST(self):
         raise tornado.web.HTTPError(405)
-    
-    def write_error(self,status_code, **kwargs):
-        self.render(
-                "error.html",
-                error_code=status_code,
-                msg = ''
-                )
 
-    #tornado template replaced by jinja2 
-    def render(self,template_name,**kwargs):
-        template = self.env.get_template(template_name)
-        html = template.render(**kwargs)
-        self.finish(html)
+
+class FormHanlder(BaseHandler):
+
+    template_name = '' 
+    row = {}.fromkeys([],None)
+    collect = None
+    validation = {'required':[]}
+    init_record = {'atime':datetime.datetime.now()}
+    required_msg = {}
+    error_msg = {}
+
+    def __init_request(self):
+        self.act = self.get_argument('act',default=None)
+        self.callback = {
+                'delete':self._delete,
+                'create':self._create,
+                'edit':self._edit,
+                'active':self._active,
+                'freeze':self._freeze,
+                }
+
+    def prepare(self):
+        super(BaseHandler,self).prepare()
+        self.__init_request()
+
+    def get(self):
+        if self.act:
+            self.callback.get(self.act,self._default)()
+        else:
+            self._home()
+
+    def post(self):
+        objid = self.get_argument('id',None)
+        if objid:
+            self._check_exist()
+        self._valide()
+        self._post()
+
+    def _post(self):
+        pass
+
+    def _home():
+        pass
+
+    def _create(self):
+        pass
+
+    def _edit(self):
+        pass
+
+    def _delete(self):
+        pass
+
+    def _active(self):
+        pass
+
+    def _freeze(self):
+        pass
+
+    def _check_exist(self):
+        self.record = None
+        objid = self.get_argument('id',default=None)
+        try:
+            if not objid:
+                raise
+            objid = objectid.ObjectId(objid)
+
+            if self.collect and isinstance(self.collect,Collection):
+                self.record = self.collect.find_one({'_id':objid})
+            
+            if not self.record:
+                raise
+        except Exception, e:
+            raise tornado.web.HTTPError(404)
+
+    def _valide():
+        if not hasattr(self,'record'):
+            self.record = {}
+            for k,v in self.init_record.items():
+                if isinstance(v,datetime.datetime):
+                    self.record[k] = datetime.datetime.now()
+
+                if isinstance(v,list):
+                    self.record[k] = [].extend(v)
+
+                if isinstance(v,dict):
+                    self.record[k] = {}.update(v)
+
+                if isinstance(v,int):
+                    self.record[k] = 0
+
+        try:
+            _required = self.valided_key.get('required',[])
+            for k in _required:
+                v = self.get_argument(k,default=None)
+                self._valide_required(k,v)
+
+            for k in self.valided_key.get('valide',{}):
+                pass
+                #todo 
+        except Exception, e:
+            raise e
+
+    def _valide_required(self,key,value,msg='field can not be empty'):
+        if not value:
+            self.msg = self.required_msg.get(k,('%s-%s')%(k,msg))
+            raise
+
+    def _valide_number(self,key,value,msg='field can not be number'):
+        try:
+            value = int(value)
+            self.msg = self.error_msg.get(k,('%s-%s')%(k,msg))
+        except Exception, e:
+            raise
 
 
 ##################################################

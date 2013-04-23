@@ -15,6 +15,8 @@ from bson import objectid
 
 from jinja2 import Environment,FileSystemLoader 
 
+from code.exceptions import ValidationError
+
 from lib.memsession import MemcacheStore
 from lib.session import Session
 from lib.queue import Queue
@@ -171,23 +173,58 @@ class ServiceHandler(BaseHandler):
 
 
 class FormHanlder(BaseHandler):
+    '''
+    @property
 
-    template_name = '' 
-    row = {}.fromkeys([],None)
-    collect = None
-    validation = {'required':[]}
+    template_name   模板
+    >>> template_name = 'index.html'
+    
+    row             空的文档对象
+    >>> row = {}.fromkeys(['_id','nickname','email','passwd','atime'],None)
+    
+    collect         collection
+    >>> collect = user
+    
+    validation      需要验证的键
+    >>> validation = {'required':['email','passwd','nickname'],'validated':['email','nickname','passwd']}
+   
+    validators      键对应的validator
+    >>> validators = {'email':'validate_email','nickname':'validate_nickname'}
+    
+    init_record     初始化新的文档
+    >>> init_record = {'atime':datetime.datetime.now(),'number':0}
+        
+    required_msg    空消息
+    >>> required_msg = {'nickname':'昵称不能为空'}
+    
+    error_msg       错误消息
+    >>> error_msg = {'nickname':'昵称中含有非法字符'}      
+    
+    以上所有配置在每个formhandler里进行配置，如果不覆盖，将启用默认配置
+    validation-->validated 可以不配置，取默认空，子类覆写 validate 方法来完成所有数据的校验
+    
+    default_args    默认重定向的时候url携带的参数，比如父资源的id，pagenum等，以回到当前用户进入的页面,改善用户体验
+    >>> default_args = ['cid','pagenum']
+    
+    '''
+    template_name = '' #模板名
+    row = {}.fromkeys([],None) #空的文档对象
+    collect = None #colletion
+    validation = {'required':[],'validated':[]} #
+    validators = {}
     init_record = {'atime':datetime.datetime.now()}
     required_msg = {}
     error_msg = {}
+    default_args = []
 
     def __init_request(self):
         self.act = self.get_argument('act',default=None)
         self.callback = {
-                'delete':self._delete,
-                'create':self._create,
-                'edit':self._edit,
-                'active':self._active,
-                'freeze':self._freeze,
+                'delete':self.delete,
+                'create':self.create,
+                'edit':self.edit,
+                'active':self.active,
+                'freeze':self.freeze,
                 }
 
     def prepare(self):
@@ -207,26 +244,45 @@ class FormHanlder(BaseHandler):
         self._valide()
         self._post()
 
+    def validate(self):
+        pass
+
+    def home():
+        pass
+
+    def create(self):
+        pass
+
+    def edit(self):
+        pass
+
+    def delete(self):
+        pass
+
+    def active(self):
+        pass
+
+    def freeze(self):
+        pass
+
+    def default(self):
+        qs = self._combine_argus(self.request.arguments,['cid','pagenum'])
+        if qs:
+            self.redirect(('%s?%s')%(self.request.path,qs[0:-1]))
+        else:
+            self.redirect(('%s')%(self.request.path))
+
+    def _combine_argus(self,args,keys=[]):
+        qs = ''
+        for i in keys:
+            if args.get(i,[]):
+                s += ('%s=%s&')%(i,args[i][-1])
+        return s
+
     def _post(self):
-        pass
-
-    def _home():
-        pass
-
-    def _create(self):
-        pass
-
-    def _edit(self):
-        pass
-
-    def _delete(self):
-        pass
-
-    def _active(self):
-        pass
-
-    def _freeze(self):
-        pass
+        #save document and redirect
+        self.collect.save(self.record)
+        self.default()
 
     def _check_exist(self):
         self.record = None
@@ -244,7 +300,7 @@ class FormHanlder(BaseHandler):
         except Exception, e:
             raise tornado.web.HTTPError(404)
 
-    def _valide():
+    def _validate():
         if not hasattr(self,'record'):
             self.record = {}
             for k,v in self.init_record.items():
@@ -261,28 +317,48 @@ class FormHanlder(BaseHandler):
                     self.record[k] = 0
 
         try:
+            #validate require
             _required = self.validation.get('required',[])
             for k in _required:
                 v = self.get_argument(k,default=None)
                 self._valide_required(k,v)
 
-            for k in self.validation.get('valide',{}):
-                pass
-                #todo 
-        except Exception, e:
-            raise e
+                self.record[k] = v
 
-    def _valide_required(self,key,value,msg='field can not be empty'):
+            #validate other
+            for k in self.validation.get('validated',[]):
+                v = self.get_argument(k,default=None)
+                if hasattr(self.validators[k]):
+                    getattr(self,self.validators[k])(k,v)
+
+                self.record[k] = v
+
+            #validate other 
+            self.validate() 
+
+        except ValidationError, e:
+            self.msg = e
+
+    def _validate_required(self,key,value,msg='empty can not be allowed'):
         if not value:
-            self.msg = self.required_msg.get(k,('%s-%s')%(k,msg))
-            raise
+            msg = self.required_msg.get(key,('%s %s')%(k,msg))
+            raise ValidationError(msg)
 
-    def _valide_number(self,key,value,msg='field can not be number'):
+    def _validate_number(self,key,value,msg='invalid number'):
         try:
             value = int(value)
-            self.msg = self.error_msg.get(k,('%s-%s')%(k,msg))
         except Exception, e:
-            raise
+            msg = self.error_msg.get(key,('%s %s')%(key,msg))
+            raise ValidationError(msg)
+        else:
+            return value
+
+    def _validate_date(self,key,value,msg='invalid date'):
+        try:
+            value = datetime.datetime.strftime(value,'%Y-%m-%d %H:%M')
+        except Exception, e:
+            msg = self.error_msg.get(key,('%s %s')%(key,msg))
+            raise ValidationError(msg)
         else:
             return value
 

@@ -13,8 +13,6 @@ class index:
         #print i
         if i.name and not web.ctx.session.name:
             web.ctx.session.name = i.name
-
-
         print 'handler session ', id(web.ctx.session)
         print 'handler session id ',web.ctx.session.session_id
         print 'handler session name',web.ctx.session.name
